@@ -17,8 +17,24 @@ use std::collections::HashSet;
 ///   `(λx. (λy. x)) z` evaluates to `λy. z`.
 ///   `(λx. (λy. x)) a b` evaluates to `a`.
 pub fn eval(term: &Term) -> Term {
-    term.clone()
-    // TODO: "Implement the eval function")
+    match term {
+        Term::Var(_) => term.clone(), // A variable evaluates to itself.
+        Term::Abs(param, body) => {
+            // An abstraction evaluates to itself, with its body eagerly evaluated.
+            Term::Abs(param.clone(), Box::new(eval(body)))
+        }
+        Term::App(term1, term2) => {
+            let left = eval(term1);
+            let right = eval(term2);
+            match left {
+                Term::Abs(param, body) => {
+                    // Apply the evaluated left term to the right term by substitution
+                    eval(&substitute(&body, &param, &right))
+                }
+                _ => Term::App(Box::new(left), Box::new(right)),
+            }
+        }
+    }    
 }
 
 
